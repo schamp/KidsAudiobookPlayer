@@ -24,15 +24,15 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>3</number>
     </property>
-    <widget class="QWidget" name="userPage">
-     <widget class="QListWidget" name="userList">
+    <widget class="QWidget" name="bookPage">
+     <widget class="QListView" name="bookList">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>40</x>
         <y>0</y>
-        <width>320</width>
+        <width>240</width>
         <height>200</height>
        </rect>
       </property>
@@ -44,55 +44,119 @@
       </property>
       <property name="minimumSize">
        <size>
-        <width>320</width>
+        <width>240</width>
         <height>200</height>
        </size>
       </property>
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAlwaysOff</enum>
       </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
       <property name="autoScroll">
+       <bool>false</bool>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
+      <property name="showDropIndicator" stdset="0">
        <bool>false</bool>
       </property>
       <property name="iconSize">
        <size>
-        <width>50</width>
-        <height>50</height>
+        <width>100</width>
+        <height>100</height>
        </size>
+      </property>
+      <property name="movement">
+       <enum>QListView::Static</enum>
+      </property>
+      <property name="flow">
+       <enum>QListView::LeftToRight</enum>
       </property>
       <property name="isWrapping" stdset="0">
        <bool>false</bool>
       </property>
       <property name="gridSize">
        <size>
-        <width>3</width>
-        <height>1</height>
+        <width>120</width>
+        <height>175</height>
        </size>
       </property>
       <property name="viewMode">
-       <enum>QListView::ListMode</enum>
+       <enum>QListView::IconMode</enum>
       </property>
       <property name="uniformItemSizes">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
-      <item>
-       <property name="text">
-        <string>Andy</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Rosemary</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Eliot</string>
-       </property>
-      </item>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="prevPageButton">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>40</width>
+        <height>200</height>
+       </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>500</width>
+        <height>500</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Prev
+Page</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="nextPageButton">
+      <property name="geometry">
+       <rect>
+        <x>280</x>
+        <y>0</y>
+        <width>40</width>
+        <height>200</height>
+       </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>200</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Next
+Page</string>
+      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="playerPage">
@@ -214,6 +278,166 @@ Album</string>
       </property>
      </widget>
     </widget>
+    <widget class="QWidget" name="menuPage">
+     <widget class="QPushButton" name="booksButton_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>90</width>
+        <height>70</height>
+       </rect>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>90</width>
+        <height>70</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>90</width>
+        <height>70</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Select Books</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="bookSelectPage">
+     <widget class="QListView" name="bookSelectList">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>0</y>
+        <width>240</width>
+        <height>200</height>
+       </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>240</width>
+        <height>200</height>
+       </size>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="autoScroll">
+       <bool>false</bool>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
+      <property name="showDropIndicator" stdset="0">
+       <bool>false</bool>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>100</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="movement">
+       <enum>QListView::Static</enum>
+      </property>
+      <property name="flow">
+       <enum>QListView::LeftToRight</enum>
+      </property>
+      <property name="isWrapping" stdset="0">
+       <bool>false</bool>
+      </property>
+      <property name="gridSize">
+       <size>
+        <width>120</width>
+        <height>175</height>
+       </size>
+      </property>
+      <property name="viewMode">
+       <enum>QListView::IconMode</enum>
+      </property>
+      <property name="uniformItemSizes">
+       <bool>true</bool>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="prevSelectPageButton">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>40</width>
+        <height>200</height>
+       </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>500</width>
+        <height>500</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Prev
+Page</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="nextSelectPageButton">
+      <property name="geometry">
+       <rect>
+        <x>280</x>
+        <y>0</y>
+        <width>40</width>
+        <height>200</height>
+       </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>200</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Next
+Page</string>
+      </property>
+     </widget>
+    </widget>
    </widget>
    <widget class="QWidget" name="controlWidget" native="true">
     <property name="geometry">
@@ -294,7 +518,7 @@ Song</string>
       <string>Menu</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="userButton">
+    <widget class="QPushButton" name="booksButton">
      <property name="geometry">
       <rect>
        <x>5</x>
@@ -316,7 +540,7 @@ Song</string>
       </size>
      </property>
      <property name="text">
-      <string>Users</string>
+      <string>Books</string>
      </property>
     </widget>
     <widget class="QPushButton" name="playPauseButton">
