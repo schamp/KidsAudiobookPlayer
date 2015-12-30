@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'player.ui'
 #
-# Created: Mon Dec 28 20:21:20 2015
+# Created: Wed Dec 30 05:54:00 2015
 #      by: pyside-uic 0.2.15 running on PySide 1.2.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -89,6 +89,7 @@ class Ui_Player(object):
         self.albumImageLabel.setMinimumSize(QtCore.QSize(0, 0))
         self.albumImageLabel.setMaximumSize(QtCore.QSize(200, 200))
         self.albumImageLabel.setBaseSize(QtCore.QSize(200, 200))
+        self.albumImageLabel.setScaledContents(True)
         self.albumImageLabel.setObjectName("albumImageLabel")
         self.browseRight = QtGui.QPushButton(self.playerPage)
         self.browseRight.setGeometry(QtCore.QRect(250, 0, 70, 200))

@@ -137,14 +137,16 @@ class PlayerMainWindow(QtGui.QMainWindow):
         self.current_book_list_index        = 0
         self.current_book_select_list_index = 0
 
-    def playBook(self, index):
-        item = self.bookListProxyModel.itemFromIndex(index)
+    def playBook(self, proxy_index):
+        source_index = self.bookListProxyModel.mapToSource(proxy_index)
+        item = self.bookListModel.itemFromIndex(source_index)
         book = item.data()
-        print("Item selected: {} ({})".format(item, book))
+#        print("Item selected: {} ({})".format(item, book))
         pixmap = QtGui.QPixmap(self.audiobook_manager.get_album_image(book))
         self.ui.albumImageLabel.setPixmap(pixmap)
         self.ui.albumTextLabel.setText("{} - {}".format(book['author'], book['title']))
         self.audiobook_manager.play_audiobook(book)
+        self.showPlayer()
 
     def bedtime(self):
         self.client.clear()
@@ -195,7 +197,6 @@ class PlayerMainWindow(QtGui.QMainWindow):
     def showBookList(self):
         self.ui.booksButton.setText('Player')
         self.ui.menuButton.setText('Menu')
-
         self.ui.stackedWidget.setCurrentIndex(0)
 
 
@@ -230,14 +231,13 @@ class PlayerMainWindow(QtGui.QMainWindow):
         self.current_book_list_index += 2
         if self.current_book_list_index % 2 == 0:
             self.current_book_list_index += 1
-        self.current_book_list_index = min(self.current_book_list_index, self.bookListModel.rowCount())
+        self.current_book_list_index = min(self.current_book_list_index, self.bookListProxyModel.rowCount())
         self.scrollBookListTo(self.current_book_list_index)
 
     def scrollBookListTo(self, pos):
-        pos = min(pos, self.bookListModel.rowCount())
-        item = self.bookListModel.item(pos)
+        pos = min(pos, self.bookListProxyModel.rowCount())
         pos = max(0, pos)
-        index = self.bookListModel.indexFromItem(item)
+        index = self.bookListProxyModel.index(pos, 0)
         self.ui.bookList.scrollTo(index, QtGui.QAbstractItemView.PositionAtBottom)
 
     def prevBookListPage(self):
@@ -252,21 +252,20 @@ class PlayerMainWindow(QtGui.QMainWindow):
         if self.current_book_select_list_index % 2 == 0:
             self.current_book_select_list_index += 1
         self.current_book_select_list_index = min(self.current_book_select_list_index, self.bookListModel.rowCount())
-        self.scrollBookListTo(self.current_book_select_list_index)
+        self.scrollBookSelectListTo(self.current_book_select_list_index)
 
     def scrollBookSelectListTo(self, pos):
         pos = min(pos, self.bookListModel.rowCount())
-        item = self.bookListModel.item(pos)
         pos = max(0, pos)
-        index = self.bookListModel.indexFromItem(item)
-        self.ui.bookList.scrollTo(index, QtGui.QAbstractItemView.PositionAtBottom)
+        index = self.bookListModel.index(pos, 0)
+        self.ui.bookSelectList.scrollTo(index, QtGui.QAbstractItemView.PositionAtBottom)
 
     def prevBookSelectListPage(self):
         self.current_book_select_list_index -= 2
         if self.current_book_select_list_index % 2 == 1:
             self.current_book_select_list_index -= 1
         self.current_book_select_list_index = max(0, self.current_book_select_list_index)
-        self.scrollBookListTo(self.current_book_select_list_index)
+        self.scrollBookSelectListTo(self.current_book_select_list_index)
 
 if __name__ == "__main__":
     import argparse
