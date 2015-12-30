@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'player.ui'
 #
-# Created: Mon Dec 28 19:43:23 2015
+# Created: Mon Dec 28 20:21:20 2015
 #      by: pyside-uic 0.2.15 running on PySide 1.2.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -103,11 +103,11 @@ class Ui_Player(object):
         self.stackedWidget.addWidget(self.playerPage)
         self.menuPage = QtGui.QWidget()
         self.menuPage.setObjectName("menuPage")
-        self.booksButton_2 = QtGui.QPushButton(self.menuPage)
-        self.booksButton_2.setGeometry(QtCore.QRect(10, 10, 90, 70))
-        self.booksButton_2.setMinimumSize(QtCore.QSize(90, 70))
-        self.booksButton_2.setMaximumSize(QtCore.QSize(90, 70))
-        self.booksButton_2.setObjectName("booksButton_2")
+        self.selectBooksButton = QtGui.QPushButton(self.menuPage)
+        self.selectBooksButton.setGeometry(QtCore.QRect(10, 10, 90, 70))
+        self.selectBooksButton.setMinimumSize(QtCore.QSize(90, 70))
+        self.selectBooksButton.setMaximumSize(QtCore.QSize(90, 70))
+        self.selectBooksButton.setObjectName("selectBooksButton")
         self.stackedWidget.addWidget(self.menuPage)
         self.bookSelectPage = QtGui.QWidget()
         self.bookSelectPage.setObjectName("bookSelectPage")
@@ -189,7 +189,7 @@ class Ui_Player(object):
         Player.setCentralWidget(self.centralWidget)
 
         self.retranslateUi(Player)
-        self.stackedWidget.setCurrentIndex(3)
+        self.stackedWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(Player)
 
     def retranslateUi(self, Player):
@@ -204,7 +204,7 @@ class Ui_Player(object):
         self.albumImageLabel.setText(QtGui.QApplication.translate("Player", "Current Album Info", None, QtGui.QApplication.UnicodeUTF8))
         self.browseRight.setText(QtGui.QApplication.translate("Player", "Next\n"
 "Album", None, QtGui.QApplication.UnicodeUTF8))
-        self.booksButton_2.setText(QtGui.QApplication.translate("Player", "Select Books", None, QtGui.QApplication.UnicodeUTF8))
+        self.selectBooksButton.setText(QtGui.QApplication.translate("Player", "Select Books", None, QtGui.QApplication.UnicodeUTF8))
         self.prevSelectPageButton.setText(QtGui.QApplication.translate("Player", "Prev\n"
 "Page", None, QtGui.QApplication.UnicodeUTF8))
         self.nextSelectPageButton.setText(QtGui.QApplication.translate("Player", "Next\n"

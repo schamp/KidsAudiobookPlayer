@@ -9,16 +9,51 @@ from ui_player import Ui_Player
 from PersistentMPDClient.PersistentMPDClient import PersistentMPDClient
 from AudiobookManager.AudiobookManager import AudiobookManager
 
+keep_debugging = True
+
+class CheckedFilterProxyModel(QtGui.QSortFilterProxyModel):
+    """Only pass through items that have been "checked" in the
+    source model"""
+    def filterAcceptsRow(self, source_row, source_parent):
+        try:
+#            print("Filtering on row: {}".format(source_row))
+            index = self.sourceModel().index(source_row, 0, source_parent)
+#            print("Index: {}".format(index))
+            item = self.sourceModel().itemFromIndex(index)
+#            print("Item: {}".format(item))
+            checked = item.checkState()
+#            print("Checked: {}".format(checked))
+            return checked == QtCore.Qt.Checked
+        except Exception as e:
+            pass
+        return True
+
+    def data(self, index, role):
+        """Force no checkbox to be shown, otherwise, behave as source model."""
+        if not index.isValid():
+            return None
+        elif role == QtCore.Qt.CheckStateRole:
+            return None
+        else:
+            return super().data(index, role)
+
 class PlayerMainWindow(QtGui.QMainWindow):
     def __init__(self, 
+                 config_file,
                  local_audiobook_file_path,
                  remote_audiobook_file_path,
                  library_audiobook_path, 
                  socket=None, 
                  host=None, 
                  port=None, 
+                 debug=False,
                  parent=None):
         super(PlayerMainWindow, self).__init__(parent)
+
+        print("Config_File: {}".format(config_file))
+        print("Local path: {}".format(local_audiobook_file_path))
+        print("Remote Path: {}".format(remote_audiobook_file_path))
+        print("Library path: {}".format(library_audiobook_path))
 
         print("Socket:  {}".format(socket))
         print("Host:    {}".format(host))
@@ -35,71 +70,72 @@ class PlayerMainWindow(QtGui.QMainWindow):
         self.socket = socket
         self.host   = host
         self.port   = port
+        self.debug  = debug
 
         if socket:
             self.client = PersistentMPDClient(socket = socket)
         else:
             self.client = PersistentMPDClient(host = host, port = port)
 
-        self.audiobook_manager = AudiobookManager(audiobook_file_path    = self.remote_audiobook_file_path,
+        self.audiobook_manager = AudiobookManager(audiobook_file_path    = self.local_audiobook_file_path,
                                                   library_audiobook_path = self.library_audiobook_path,
-                                                  client                 = self.client)
+                                                  client                 = self.client,
+                                                  debug                  = self.debug)
+
+        self.config_file = config_file
+        if os.path.exists(self.config_file):
+            with open(config_file, 'r') as fin:
+                self.config = json.load(fin)
+        else:
+            print("Warning, config file not found, using empty config")
+            self.config = {
+                'selected_books': [], # empty list means show all books
+            }
+
+        # FIXME: identify currently playing book
 
         self.ui = Ui_Player()
         self.ui.setupUi(self)
 
+        self.bookListModel = QtGui.QStandardItemModel(self)
+
+        self.bookListProxyModel = CheckedFilterProxyModel(self)
+        self.bookListProxyModel.setSourceModel(self.bookListModel)
+        self.bookListProxyModel.setDynamicSortFilter(True)
+
+        self.ui.bookList.setModel(self.bookListProxyModel)
+        self.ui.bookSelectList.setModel(self.bookListModel)
+
+        self.reloadBookList()
+    
         self.ui.stopButton.clicked.connect(self.client.stop)
         self.ui.playPauseButton.clicked.connect(self.playPause)
 
         self.ui.nextButton.setText("Bedtime")
         self.ui.nextButton.clicked.connect(self.bedtime)
 
-#        self.ui.prevButton.setText("Thomas")
-#        self.ui.prevButton.clicked.connect(self.thomas)
+        self.ui.bookList.clicked.connect(self.playBook)
 
-#        self.ui.browseRight.setText("Frog and Toad")
-#        self.ui.browseRight.clicked.connect(self.frogtoad)
-
-#        self.ui.browseLeft.setText("Mouse Tales")
-#        self.ui.browseLeft.clicked.connect(self.mousetales)
-
-        self.audiobooks = self.audiobook_manager.list_audiobooks()
-
-        self.ui.bookList.setViewMode(QtGui.QListView.IconMode)
-        self.ui.bookList.setIconSize(QtCore.QSize(100,100))
-
-        self.model = QtGui.QStandardItemModel(self.ui.bookList)
-
-        for book in self.audiobooks:
-            item = QtGui.QStandardItem("{}\n{}".format(book['author'], book['title']))
-            item.setData(book)
-            item.setSizeHint(QtCore.QSize(140, 175))
-#            item.setCheckable(True)
-#            print("URI: {}".format(book['uri']))
-            audiobook_path = book['uri'].replace(self.library_audiobook_path, self.local_audiobook_file_path)
-#            print("Audiobook_path: {}".format(audiobook_path))
-            # os.path.normpath should convert foward slashes to back slashes for windows
-            audiobook_path = os.path.normpath(audiobook_path)
-#            print("Looking for album image in path: {}".format(audiobook_path))
-            item.setIcon(QtGui.QIcon(os.path.join(audiobook_path, 'cover.jpg')))
-            self.model.appendRow(item)
-
-        self.ui.bookList.setModel(self.model)
-        self.ui.bookList.clicked.connect(self.bookSelected)
-
-        self.ui.nextPageButton.clicked.connect(self.nextPage)
-        self.ui.prevPageButton.clicked.connect(self.prevPage)
+        self.ui.nextPageButton.clicked.connect(self.nextBookListPage)
+        self.ui.prevPageButton.clicked.connect(self.prevBookListPage)
 
         self.ui.booksButton.clicked.connect(self.toggleBookList)
         self.ui.menuButton.clicked.connect(self.toggleMenu)
 
-        # might need to make this 1
-        self.current_index = 0
+        self.ui.selectBooksButton.clicked.connect(self.showBookSelectList)
+        self.ui.nextSelectPageButton.clicked.connect(self.nextBookSelectListPage)
+        self.ui.prevSelectPageButton.clicked.connect(self.prevBookSelectListPage)
 
-    def bookSelected(self, index):
-        item = self.model.itemFromIndex(index)
+        self.current_book_list_index        = 0
+        self.current_book_select_list_index = 0
+
+    def playBook(self, index):
+        item = self.bookListProxyModel.itemFromIndex(index)
         book = item.data()
         print("Item selected: {} ({})".format(item, book))
+        pixmap = QtGui.QPixmap(self.audiobook_manager.get_album_image(book))
+        self.ui.albumImageLabel.setPixmap(pixmap)
+        self.ui.albumTextLabel.setText("{} - {}".format(book['author'], book['title']))
         self.audiobook_manager.play_audiobook(book)
 
     def bedtime(self):
@@ -112,10 +148,29 @@ class PlayerMainWindow(QtGui.QMainWindow):
         else:
             self.client.pause()
 
+    def reloadBookList(self):
+        self.bookListModel.clear()
+
+        audiobooks = self.audiobook_manager.list_audiobooks()[:2]
+
+        for i, book in enumerate(audiobooks, start=1):
+            item = QtGui.QStandardItem("{}\n{}".format(book['author'], book['title']))
+            item.setData(book)
+            item.setSizeHint(QtCore.QSize(140, 175))
+            item.setCheckable(True)
+            if not self.config.get('selected_books') \
+                or "{}: {}".format(book['author'], book['title']) in self.config.get('selected_books'):
+                item.setCheckState(QtCore.Qt.Checked)
+            album_image = self.audiobook_manager.get_album_image(book)
+            item.setIcon(QtGui.QIcon(album_image))
+            self.bookListModel.appendRow(item)
+
     def showBookList(self):
         self.ui.booksButton.setText('Player')
         self.ui.menuButton.setText('Menu')
+
         self.ui.stackedWidget.setCurrentIndex(0)
+
 
     def showPlayer(self):
         self.ui.booksButton.setText('Books')
@@ -139,33 +194,57 @@ class PlayerMainWindow(QtGui.QMainWindow):
         else:
             self.showMenu()
 
-    def nextPage(self):
-        self.current_index += 2
-        if self.current_index % 2 == 0:
-            self.current_index += 1
-        self.current_index = min(self.current_index, len(self.audiobooks))
-        self.scrollTo(self.current_index)
+    def showBookSelectList(self):
+        # load the book list and the config
+        self.reloadBookList()
+        self.ui.stackedWidget.setCurrentIndex(3)
+        
+    def nextBookListPage(self):
+        self.current_book_list_index += 2
+        if self.current_book_list_index % 2 == 0:
+            self.current_book_list_index += 1
+        self.current_book_list_index = min(self.current_book_list_index, self.bookListModel.rowCount())
+        self.scrollBookListTo(self.current_book_list_index)
 
-    def scrollTo(self, pos):
-        pos = min(pos, len(self.audiobooks))
-        item = self.model.item(pos)
-#        data = item.data() if item else None
-#        uri = data['uri'] if data else None
-#        print("scrolling to: {} ({})".format(pos, uri))
+    def scrollBookListTo(self, pos):
+        pos = min(pos, self.bookListModel.rowCount())
+        item = self.bookListModel.item(pos)
         pos = max(0, pos)
-        index = self.model.indexFromItem(item)
+        index = self.bookListModel.indexFromItem(item)
         self.ui.bookList.scrollTo(index, QtGui.QAbstractItemView.PositionAtBottom)
 
-    def prevPage(self):
-        self.current_index -= 2
-        if self.current_index % 2 == 1:
-            self.current_index -= 1
-        self.current_index = max(0, self.current_index)
-        self.scrollTo(self.current_index)
+    def prevBookListPage(self):
+        self.current_book_list_index -= 2
+        if self.current_book_list_index % 2 == 1:
+            self.current_book_list_index -= 1
+        self.current_book_list_index = max(0, self.current_book_list_index)
+        self.scrollBookListTo(self.current_book_list_index)
+
+    def nextBookSelectListPage(self):
+        self.current_book_select_list_index += 2
+        if self.current_book_select_list_index % 2 == 0:
+            self.current_book_select_list_index += 1
+        self.current_book_select_list_index = min(self.current_book_select_list_index, self.bookListModel.rowCount())
+        self.scrollBookListTo(self.current_book_select_list_index)
+
+    def scrollBookSelectListTo(self, pos):
+        pos = min(pos, self.bookListModel.rowCount())
+        item = self.bookListModel.item(pos)
+        pos = max(0, pos)
+        index = self.bookListModel.indexFromItem(item)
+        self.ui.bookList.scrollTo(index, QtGui.QAbstractItemView.PositionAtBottom)
+
+    def prevBookSelectListPage(self):
+        self.current_book_select_list_index -= 2
+        if self.current_book_select_list_index % 2 == 1:
+            self.current_book_select_list_index -= 1
+        self.current_book_select_list_index = max(0, self.current_book_select_list_index)
+        self.scrollBookListTo(self.current_book_select_list_index)
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config",  action="store", default="player.json", help="The path to the player config file.")
     parser.add_argument("-d", "--debug",   action="store_true",           help="Don't reset the playlist to the bedtime playlist.")
     parser.add_argument("-s", "--socket",  action="store", default=None,  help="The local socket object to connect to.")
     parser.add_argument("-a", "--address", action="store", default=None,  help="The address of the host to connect to.")
@@ -178,15 +257,16 @@ if __name__ == "__main__":
 
     app = QtGui.QApplication(sys.argv)
 
-    mySW = PlayerMainWindow(local_audiobook_file_path  = args.local,
+    mySW = PlayerMainWindow(config_file                = args.config,
+                            local_audiobook_file_path  = args.local,
                             remote_audiobook_file_path = args.remote,
                             library_audiobook_path     = args.library,
                             socket                     = args.socket,
                             host                       = args.address,
-                            port                       = args.port)
+                            port                       = args.port,
+                            debug                      = args.debug)
     mySW.show()
-    mySW.showBookList()
-#    mySW.ui.stackedWidget.setCurrentIndex(1)
+    mySW.showPlayer()
 
 #    if not args.debug:
 #        mySW.bedtime()

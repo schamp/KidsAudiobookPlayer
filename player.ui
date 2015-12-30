@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="bookPage">
      <widget class="QListView" name="bookList">
@@ -279,7 +279,7 @@ Album</string>
      </widget>
     </widget>
     <widget class="QWidget" name="menuPage">
-     <widget class="QPushButton" name="booksButton_2">
+     <widget class="QPushButton" name="selectBooksButton">
       <property name="geometry">
        <rect>
         <x>10</x>
