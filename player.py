@@ -1,3 +1,4 @@
+import json
 import pdb
 import os
 import socket
@@ -83,13 +84,18 @@ class PlayerMainWindow(QtGui.QMainWindow):
                                                   debug                  = self.debug)
 
         self.config_file = config_file
+        self.config = {}
         if os.path.exists(self.config_file):
-            with open(config_file, 'r') as fin:
-                self.config = json.load(fin)
-        else:
+            with open(self.config_file, 'r') as fin:
+                try:
+                    self.config = json.load(fin)
+                except ValueError as e:
+                    print("Error reading config file.")
+
+        if not self.config or 'selected_books' not in self.config:
             print("Warning, config file not found, using empty config")
             self.config = {
-                'selected_books': [], # empty list means show all books
+                'selected_books': {}, # dict of "author: title" to bool, True if selected
             }
 
         # FIXME: identify currently playing book
@@ -98,6 +104,8 @@ class PlayerMainWindow(QtGui.QMainWindow):
         self.ui.setupUi(self)
 
         self.bookListModel = QtGui.QStandardItemModel(self)
+        self.bookListModel.itemChanged.connect(self.itemChanged)
+
 
         self.bookListProxyModel = CheckedFilterProxyModel(self)
         self.bookListProxyModel.setSourceModel(self.bookListModel)
@@ -151,19 +159,38 @@ class PlayerMainWindow(QtGui.QMainWindow):
     def reloadBookList(self):
         self.bookListModel.clear()
 
-        audiobooks = self.audiobook_manager.list_audiobooks()[:2]
+        audiobooks = self.audiobook_manager.list_audiobooks()
 
         for i, book in enumerate(audiobooks, start=1):
+            # select all books by default
+            if book['uri'] not in self.config['selected_books']:
+                self.config['selected_books'][book['uri']] = True
+
             item = QtGui.QStandardItem("{}\n{}".format(book['author'], book['title']))
             item.setData(book)
             item.setSizeHint(QtCore.QSize(140, 175))
             item.setCheckable(True)
+            
             if not self.config.get('selected_books') \
-                or "{}: {}".format(book['author'], book['title']) in self.config.get('selected_books'):
+                or self.config.get('selected_books').get(book['uri'], False):
                 item.setCheckState(QtCore.Qt.Checked)
             album_image = self.audiobook_manager.get_album_image(book)
             item.setIcon(QtGui.QIcon(album_image))
             self.bookListModel.appendRow(item)
+        self.writeConfig()
+    
+    def writeConfig(self):
+        print("Writing config file...")
+        with open(self.config_file, 'w') as fout:
+            json.dump(self.config, fout)
+
+    def itemChanged(self, item):
+        # triggered when an item is newly checked.
+        # update the config
+        data = item.data()
+        self.config['selected_books'][data['uri']] = item.checkState() == QtCore.Qt.Checked
+        # write the updated config out to disk (because we'll reload it the next time we go to update the book list
+        self.writeConfig()
 
     def showBookList(self):
         self.ui.booksButton.setText('Player')
